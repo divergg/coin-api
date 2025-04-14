@@ -1,0 +1,64 @@
+services:
+  celery:
+    build: .
+    command: celery -A config  worker -l INFO
+    network_mode: host
+    depends_on:
+      - backend
+      - redis
+    env_file: .env
+
+  celery-beat:
+    build: .
+    command: celery -A config beat -l INFO
+    network_mode: host
+    depends_on:
+      - backend
+      - redis
+    env_file: .env
+
+  redis:
+    image: redis:latest
+    network_mode: host
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgis/postgis:16-3.5-alpine
+    environment:
+      POSTGRES_USER: veelzy
+      POSTGRES_PASSWORD: Passw0rd
+      POSTGRES_DB: veelzy
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+
+  backend:
+    container_name: ai-coin-backend
+    network_mode: host
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: gunicorn config.wsgi -c gunicorn.conf.py --bind 0.0.0.0:8000 --reload
+    volumes:
+      - ./config/settings/:/app/config/settings/
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DO_DJANGO_INIT=true
+      - PYTHONSTARTUP=/app/shell_startup.py
+      - PYTHONDONTWRITEBYTE=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      - redis
+#      - postgres
+      
+volumes:
+  static_volume:
+  media_volume:
