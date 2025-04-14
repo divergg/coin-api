@@ -1,7 +1,10 @@
-Admin panel
+## Launch instructions
+docker compose up
+
+## Admin panel
 ![img.png](img.png)
 
-Swagger
+## Swagger
 ![img_1.png](img_1.png)
 
 API description
